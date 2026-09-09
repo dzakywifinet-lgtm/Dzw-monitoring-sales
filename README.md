@@ -1,3 +1,4 @@
+<img width="1600" height="1582" alt="fullpage_snapshot_dzw_my_id_2026-09-09-14-49-21" src="https://github.com/user-attachments/assets/e1a365f2-2871-4e68-b961-d78ea4d86ece" />
 # Dashboard Penghasilan MikroTik
 
 Dashboard web untuk memantau penjualan voucher Hotspot/PPPoE MikroTik secara real-time: transaksi, pengguna online, bandwidth, kuota FUP, hingga notifikasi Telegram — tanpa perlu buka Winbox.

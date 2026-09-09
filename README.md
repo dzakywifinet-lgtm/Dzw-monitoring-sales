@@ -148,3 +148,8 @@ Cek Bot Token & Chat ID di Pengaturan sudah benar, dan bot sudah pernah di-`/sta
 - **Warna & tampilan**: `assets/style.css` — variabel warna `--ink`/`--panel`/`--blue`/`--green`/`--yellow`/`--purple` di bagian atas file. Font judul (Nunito) & font angka (JetBrains Mono) diatur lewat `@import` di baris pertama file yang sama.
 - **Interval cron**: sesuaikan jadwal (mis. `*/5` untuk tiap 5 menit) sebelum ditempel ke crontab.
 - **Ikon PWA**: ganti file di `assets/icons/` (ukuran sama), lalu perbarui `assets/manifest.json` bila perlu.
+
+## References
+
+* [MIKHMON v3](https://laksa19.github.io/?mikhmon/v3)
+

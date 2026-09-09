@@ -82,6 +82,21 @@ Untuk mengaktifkan pemecahan kategori trafik, import `usage-kategori-mikrotik.rs
 - **Android/Chrome**: buka dashboard, lalu pilih "Instal aplikasi" dari address bar atau menu (⋮) > "Add to Home screen".
 - **iPhone/Safari**: buka dashboard, tekan tombol Share, lalu pilih "Add to Home Screen".
 
+## Setup Awal (Checklist)
+
+Urutan dari nol sampai semua fitur (termasuk Analisis Pemakaian) jalan:
+
+1. Deploy semua file ke web server, pastikan folder `data/` bisa ditulis (writable) oleh PHP.
+2. Buka dashboard di browser, login pakai IP + username + password API MikroTik.
+3. Buka halaman **Pengaturan**, isi:
+   - Interface WAN yang Dipantau (nama persis seperti di MikroTik)
+   - Total Kuota FUP (GB)
+   - Tanggal reset bulanan
+   - (Opsional) Bot Token & Chat ID Telegram
+4. **(Opsional, kalau mau kartu Analisis Pemakaian aktif)** Buka Winbox/WebFig ke router → New Terminal → jalankan `/import usage-kategori-mikrotik.rsc`. Pastikan client hotspot memakai router ini sebagai DNS server (`/ip dns` → `allow-remote-requests=yes`, dan client tidak pakai DNS custom/DNS-over-HTTPS sendiri).
+5. **(Opsional)** Aktifkan Mode Cron di Pengaturan kalau mau data tetap update meski dashboard tidak dibuka terus — salin perintah cron yang ditampilkan ke crontab server.
+6. Tunggu beberapa menit agar data mulai terisi (bandwidth, kategori pemakaian butuh beberapa siklus poll dulu).
+
 ## Mode Cron
 
 Mode Cron memungkinkan pengecekan bandwidth, kuota, kategori pemakaian, dan notifikasi Telegram tetap berjalan tanpa dashboard dibuka di browser.
@@ -110,6 +125,21 @@ MikroTik tidak menyimpan riwayat bulanan secara otomatis. Dashboard ini mencatat
   */10 * * * * curl -s -b cookie.txt https://domain-anda/report/api/live.php > /dev/null
   ```
 - Counter interface WAN yang reset ke 0 setelah router reboot sudah ditangani secara aman (delta negatif dianggap reset, bukan dikurangi).
+
+## FAQ Singkat
+
+**Kartu Analisis Pemakaian kosong / semua masuk "Web & lainnya"?**
+Berarti script `.rsc` belum di-import ke router, atau client hotspot tidak pakai router ini sebagai DNS server. Cek `/ip dns` di MikroTik dan pastikan HP/laptop client tidak pakai DNS custom atau DNS-over-HTTPS di browser.
+
+**Kuota FUP di dashboard beda dengan catatan ISP?**
+MikroTik tidak menyimpan histori bulanan otomatis — dashboard menghitung sendiri sejak pertama kali dipantau. Pakai fitur "Sinkronisasi Pemakaian Saat Ini" di Pengaturan untuk menyamakan ke angka resmi ISP.
+
+**Setelah clone ulang dari GitHub, kok semua data kosong?**
+Normal — folder `data/` sengaja tidak ikut ter-commit (lihat `.gitignore`) karena isinya kredensial & data transaksi. Isi ulang Pengaturan; data lain (bandwidth, kategori pemakaian) akan terisi otomatis seiring waktu.
+
+**Notifikasi Telegram tidak muncul?**
+Cek Bot Token & Chat ID di Pengaturan sudah benar, dan bot sudah pernah di-`/start` dari akun Telegram yang Chat ID-nya dipakai.
+
 
 ## Kustomisasi
 

@@ -59,19 +59,31 @@ dashboard/
 └── data/                      Penyimpanan lokal pengaturan & data pemakaian (dilindungi .htaccess)
 ```
 
-## Instalasi
+## 📋 Minimum Requirements
 
-1. Salin seluruh isi folder ini ke direktori web server Anda (mis. `www/report`).
-2. Pastikan PHP 7.2+ aktif dan folder `data/` bisa ditulis (writable) oleh PHP.
-3. Buka `https://domain-anda/report/` — akan diarahkan ke halaman login.
-4. Isi IP, username, dan password API MikroTik. Pastikan layanan API aktif di router:
+| Komponen | Spesifikasi Minimum | Keterangan |
+| :--- | :--- | :--- |
+| **RouterBoard** | MikroTik License Level 4 | Mendukung fitur API |
+| **CPU Router** | Clock Speed 650 MHz | Untuk kelancaran penarikan data harian |
+| **RouterOS** | v6.3x.x s/d v7.x | Kompatibel dengan skrip `.rsc` pemakaian |
+| **Web Server** | Apache / NGINX / uHTTPd | Bisa di PC, STB, SBC, atau OpenWRT |
+| **Versi PHP** | PHP 7.2 s/d PHP 8.x | Membutuhkan ekstensi `session`, `curl`, & `openssl` |
+
+## 🚀 Instalasi
+
+1. Salin seluruh isi folder ini ke direktori web server Anda (mis. `www/report` atau `www/Dzw-monitoring-sales`).
+2. Pastikan PHP 7.2+ aktif dan folder `data/` bisa ditulis (*writable*) oleh PHP.
+3. Buka `http://<IP-SERVER-ANDA>/Dzw-monitoring-sales` — Anda akan diarahkan ke halaman login.
+4. Isi IP, username, dan password API MikroTik. Pastikan layanan API aktif di router:  
    `IP > Services > api` (port 8728, atau `api-ssl` 8729 jika pakai SSL).
 5. Setelah masuk, buka halaman **Pengaturan** untuk mengisi:
    - Total Kuota FUP (GB)
    - Interface WAN yang dipantau (nama persis seperti di MikroTik, mis. `ether1`)
    - Tanggal reset bulanan (mengikuti tanggal reset FUP dari ISP)
-   - (Opsional) Bot Token & Chat ID Telegram untuk notifikasi
+   - *(Opsional)* Bot Token & Chat ID Telegram untuk notifikasi
 6. Jika ingin menyamakan kuota dengan angka resmi ISP, gunakan fitur "Sinkronisasi Pemakaian Saat Ini" di halaman Pengaturan.
+
+
 
 ### Fitur Analisis Pemakaian (opsional)
 
@@ -113,7 +125,7 @@ Mode Cron memungkinkan pengecekan bandwidth, kuota, kategori pemakaian, dan noti
 - Sangat disarankan memasang dashboard ini di belakang HTTPS.
 - Batasi akses API MikroTik hanya dari IP server web Anda (`Services > api > Available From`).
 - Gunakan akun MikroTik terbatas (bukan admin utama) untuk dashboard ini bila memungkinkan.
-- **Sebelum push ke GitHub**: tambahkan folder `data/` (berisi kredensial cron, cache voucher, dan data pemakaian) ke `.gitignore` agar data sensitif tidak ikut ter-commit.
+
 
 ## Catatan Akurasi Data Pemakaian
 
@@ -122,7 +134,7 @@ MikroTik tidak menyimpan riwayat bulanan secara otomatis. Dashboard ini mencatat
 - Biarkan dashboard sesekali terbuka, atau
 - Jadwalkan cron memanggil `api/live.php` secara berkala (butuh cookie sesi hasil login yang masih valid):
   ```
-  */10 * * * * curl -s -b cookie.txt https://domain-anda/report/api/live.php > /dev/null
+  */10 * * * * curl -s -b cookie.txt https://<ip-server>/<domain-anda>/report/api/live.php > /dev/null
   ```
 - Counter interface WAN yang reset ke 0 setelah router reboot sudah ditangani secara aman (delta negatif dianggap reset, bukan dikurangi).
 

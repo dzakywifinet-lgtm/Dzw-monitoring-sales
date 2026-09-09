@@ -1,0 +1,18 @@
+{
+  "name": "Laporan Penghasilan Hotspot",
+  "short_name": "Penghasilan",
+  "description": "Dashboard penghasilan voucher hotspot, kuota FUP, dan status MikroTik",
+  "start_url": "../index.php",
+  "scope": "../",
+  "lang": "id",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#0A1220",
+  "theme_color": "#0A1220",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

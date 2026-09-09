@@ -1,0 +1,16 @@
+# Folder upload logo voucher - gambar boleh diakses publik (dipakai saat print),
+# TAPI file PHP/script apa pun tidak boleh pernah dieksekusi dari sini, sebagai
+# lapisan pengaman kalau ada file berbahaya yang lolos ke folder ini.
+<IfModule mod_authz_core.c>
+    <FilesMatch "\.(php[0-9]?|phtml|phar|pl|py|cgi|sh)$">
+        Require all denied
+    </FilesMatch>
+</IfModule>
+<IfModule !mod_authz_core.c>
+    <FilesMatch "\.(php[0-9]?|phtml|phar|pl|py|cgi|sh)$">
+        Order allow,deny
+        Deny from all
+    </FilesMatch>
+</IfModule>
+php_flag engine off
+Options -Indexes -ExecCGI

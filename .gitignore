@@ -1,0 +1,16 @@
+# Data lokal & sensitif — jangan ikut di-commit
+data/*.json
+data/*.json.bak
+data/.cronkey
+!data/index.php
+!data/.htaccess
+
+# File upload milik user (logo, dll) — biarkan folder ada, isinya jangan ikut
+assets/uploads/*
+!assets/uploads/.htaccess
+!assets/uploads/index.php
+
+# OS / editor
+.DS_Store
+Thumbs.db
+*.swp

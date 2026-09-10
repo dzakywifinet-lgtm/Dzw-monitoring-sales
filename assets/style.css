@@ -920,7 +920,7 @@ html[data-view-mode="desktop"] .mh-copy-row{ flex-direction: row !important; }
  * di layar monitor besar. Logic partikelnya ada di assets/app.js.
  * ========================================================================= */
 #cyber-particles{
-  position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+  position: fixed !important; top: 0; left: 0; width: 100vw; height: 100vh;
   pointer-events: none; z-index: 0;
 }
 .mh-shell, .mh-main, main{ background: transparent !important; position: relative; z-index: 1; }

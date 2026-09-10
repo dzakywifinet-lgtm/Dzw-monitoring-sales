@@ -582,14 +582,23 @@
     if (!canvas) return;
     var ctx = canvas.getContext('2d');
     var particles = [];
-    var particleCount = 50;
+    var particleCount = 150;
 
-    function resize() {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-    }
-    window.addEventListener('resize', resize);
-    resize();
+
+  function resize() {
+    canvas.width = Math.max(window.innerWidth, document.documentElement.clientWidth);
+    canvas.height = Math.max(
+    document.body.scrollHeight,
+    document.documentElement.scrollHeight,
+    window.innerHeight
+   );
+   
+   if (particles.length) {
+    particles.forEach(function (p) { p.reset(); });
+  }
+}
+window.addEventListener('resize', resize);
+resize();
 
     function Particle() {
       this.reset();
@@ -665,41 +674,7 @@
     animate();
   })();
 
-  // ---- Toggle mode tampilan paksa: Desktop / Mobile (independen dari tema) ----
-  // Tombol di pojok kanan bawah - paksa layout desktop (grid lebar, boleh
-  // scroll horizontal) atau layout mobile (satu kolom, scroll vertikal
-  // seperti HP) TERLEPAS dari ukuran layar sungguhan. Pilihan disimpan di
-  // localStorage supaya diingat tiap buka dashboard lagi.
-  (function viewModeInit() {
-    var wrap = document.getElementById('viewModeToggle');
-    if (!wrap) return;
-    var buttons = wrap.querySelectorAll('.mh-view-mode-btn');
-
-    function apply(mode) {
-      if (mode === 'desktop' || mode === 'mobile') {
-        document.documentElement.setAttribute('data-view-mode', mode);
-      } else {
-        document.documentElement.removeAttribute('data-view-mode');
-      }
-      buttons.forEach(function (b) {
-        b.classList.toggle('mh-view-mode-btn-active', b.getAttribute('data-view-mode') === mode);
-      });
-    }
-
-    var saved = '';
-    try { saved = localStorage.getItem('mh-view-mode') || ''; } catch (e) {}
-    apply(saved);
-
-    buttons.forEach(function (b) {
-      b.addEventListener('click', function () {
-        var mode = b.getAttribute('data-view-mode');
-        // Klik tombol yang sedang aktif = kembali ke otomatis (menyesuaikan layar asli).
-        var next = document.documentElement.getAttribute('data-view-mode') === mode ? '' : mode;
-        try { localStorage.setItem('mh-view-mode', next); } catch (e) {}
-        apply(next);
-      });
-    });
-  })();
+  
 
   // ---- Traffic real-time (canvas mandiri - TANPA library luar / CDN) ----
   // CATATAN PENTING (kenapa diganti dari versi Chart.js sebelumnya): versi

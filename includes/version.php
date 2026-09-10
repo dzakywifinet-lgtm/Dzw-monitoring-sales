@@ -3,4 +3,4 @@
 // supaya browser & PWA ambil versi baru (bukan versi lama dari cache).
 // Dipakai sebagai query string (?v=...) pada tag <link>/<script> di semua
 // halaman, dan sebagai nama cache di service-worker.js.
-define('MH_ASSET_VER', '21.0.0');
+define('MH_ASSET_VER', '22.0.9');

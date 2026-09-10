@@ -880,15 +880,33 @@ function mh_fetch_pppoe_active_list($api)
         }
     }
 
+    // Total data per sesi: beda dari hotspot yang byte-nya sudah langsung
+    // ada di /ppp/active/print, sesi PPPoE server bikin interface dinamis
+    // "<pppoe-USERNAME>" - byte-nya dibaca dari situ. Ambil SEKALI semua
+    // interface dulu (bukan query per-user dalam loop) baru dicocokkan.
+    $ifaceRows = @$api->comm('/interface/print');
+    $ifaceBytes = array();
+    if (is_array($ifaceRows)) {
+        foreach ($ifaceRows as $if) {
+            if (!empty($if['name'])) {
+                $ifaceBytes[$if['name']] = (isset($if['rx-byte']) ? (float) $if['rx-byte'] : 0)
+                    + (isset($if['tx-byte']) ? (float) $if['tx-byte'] : 0);
+            }
+        }
+    }
+
     foreach ($active as $row) {
         $user = isset($row['name']) ? $row['name'] : (isset($row['user']) ? $row['user'] : '-');
         $comment = isset($commentMap[$user]) ? trim($commentMap[$user]) : '';
+        $ifaceName = '<pppoe-' . $user . '>';
+
         $out[] = array(
             'user'    => $user,
             'name'    => $comment !== '' ? $comment : $user,
             'address' => isset($row['address']) ? $row['address'] : '-',
             'uptime'  => isset($row['uptime']) ? mh_format_uptime($row['uptime']) : '-',
             'service' => isset($row['service']) ? $row['service'] : 'pppoe',
+            'total'   => isset($ifaceBytes[$ifaceName]) ? mh_format_bytes($ifaceBytes[$ifaceName]) : '-',
         );
     }
     return $out;

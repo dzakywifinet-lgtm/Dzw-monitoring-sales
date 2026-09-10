@@ -292,11 +292,11 @@
       return '<p class="mh-empty" style="padding:12px 0;">Tidak ada sesi PPPoE yang aktif saat ini.</p>';
     }
     return '<div class="mh-table-wrap"><table class="mh-table"><thead><tr>' +
-      '<th>Nama (Comment)</th><th>Username</th><th>IP Address</th><th>Uptime</th>' +
-      '</tr></thead><tbody>' + list.map(function (p) {
-        return '<tr><td>' + esc(p.name) + '</td><td>' + esc(p.user) + '</td><td>' + esc(p.address) +
-          '</td><td>' + esc(p.uptime) + '</td></tr>';
-      }).join('') + '</tbody></table></div>';
+  '<th>Nama (Comment)</th><th>Username</th><th>IP Address</th><th>Uptime</th><th class="mh-num">Total Data</th>' +
+  '</tr></thead><tbody>' + list.map(function (p) {
+    return '<tr><td>' + esc(p.name) + '</td><td>' + esc(p.user) + '</td><td>' + esc(p.address) +
+      '</td><td>' + esc(p.uptime) + '</td><td class="mh-num">' + esc(p.total) + '</td></tr>';
+  }).join('') + '</tbody></table></div>';
   }
 
   function openPppoeActiveModal() {

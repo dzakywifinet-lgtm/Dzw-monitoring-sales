@@ -64,7 +64,7 @@ if ($bw['quota_gb'] > 0) {
 <html lang="id">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" id="viewportMeta" content="width=device-width, initial-scale=1">
 <title>Laporan Penghasilan &middot; <?= htmlspecialchars($identity, ENT_QUOTES, 'UTF-8') ?></title>
 <script>(function(){try{var t=localStorage.getItem('mh-theme')||'dark';document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
 <link rel="stylesheet" href="assets/style.css?v=<?= MH_ASSET_VER ?>">
@@ -563,18 +563,11 @@ if ($bw['quota_gb'] > 0) {
 <div id="voucherSaleNotifStack" class="mh-sale-notif-stack" aria-live="polite"></div>
 
 <!-- Toggle mode tampilan paksa (pojok kanan bawah, desktop & mobile) -->
-<div class="mh-view-mode-toggle" id="viewModeToggle">
-  <button type="button" class="mh-view-mode-btn" data-view-mode="desktop">
-    <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="13" rx="1.5"></rect><path d="M8 20h8M12 17v3"></path></svg>
-    <span>Desktop</span>
-  </button>
-  <button type="button" class="mh-view-mode-btn" data-view-mode="mobile">
-    <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="2" width="10" height="20" rx="2"></rect><path d="M11 18h2"></path></svg>
-    <span>Mobile</span>
-  </button>
+<div class="mh-view-mode-toggle">
+  <button type="button" class="mh-view-mode-btn viewmode-toggle-btn" onclick="toggleViewMode()"></button>
 </div>
-
 <script src="assets/app.js?v=<?= MH_ASSET_VER ?>"></script>
+<script src="assets/viewmode.js?v=<?= MH_ASSET_VER ?>"></script>
 <script>
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', function () {

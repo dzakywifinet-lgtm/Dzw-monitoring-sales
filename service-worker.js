@@ -3,7 +3,7 @@
 // bisa dibuka walau sinyal jelek. Data live (api/*.php) & halaman PHP TIDAK
 // pernah disajikan basi - selalu diutamakan dari jaringan.
 
-var CACHE_NAME = 'mh-shell-v22.0.9';
+var CACHE_NAME = 'mh-shell-v22.1.2';
 var STATIC_ASSETS = [
   'assets/style.css',
   'assets/app.js',

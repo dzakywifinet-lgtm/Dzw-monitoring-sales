@@ -175,10 +175,25 @@
       groups[key].forEach(function (b) {
         var dotClass = b.online ? 'mh-ip-dot-on' : 'mh-ip-dot-off';
         var sub = b.address || b.mac || '';
+
+        // Kuota TIDAK ditampilkan untuk grup Access Point - AP cuma perlu status & uptime.
+        var quotaText = (key !== 'ap' && b.quota_used_fmt)
+          ? b.quota_used_fmt + (b.quota_limit_fmt ? ' / ' + b.quota_limit_fmt : '')
+          : '';
+        var quotaHtml = quotaText
+          ? '<span class="mh-ipbinding-quota">' + esc(quotaText) + '</span>'
+          : '';
+
+        var statusClass = b.online ? 'mh-ipbinding-status-on' : 'mh-ipbinding-status-off';
+        var statusHtml = '<span class="mh-ipbinding-status ' + statusClass + '">' + esc(b.status_label || '-') + '</span>';
+        var historyHtml = '<span class="mh-ipbinding-uptime">' + esc(b.uptime_display || '-') + '</span>';
+
         html += '<div class="mh-ipbinding-row">' +
           '<span class="mh-ip-dot ' + dotClass + '" title="' + (b.online ? 'Online' : 'Offline') + '"></span>' +
           '<div class="mh-ipbinding-info"><span class="mh-ipbinding-name">' + esc(b.label || b.name) + '</span>' +
-          '<span class="mh-ipbinding-sub">' + esc(sub) + '</span></div></div>';
+          '<span class="mh-ipbinding-sub">' + esc(sub) + '</span></div>' +
+          '<div class="mh-ipbinding-meta">' + quotaHtml + statusHtml + historyHtml + '</div>' +
+          '</div>';
       });
       html += '</div>';
     });

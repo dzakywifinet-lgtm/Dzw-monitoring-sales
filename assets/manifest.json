@@ -1,6 +1,6 @@
 {
-  "name": "Laporan Penghasilan Hotspot",
-  "short_name": "Penghasilan",
+  "name": "DZW Monitoring sales",
+  "short_name": "DeMonS",
   "description": "Dashboard penghasilan voucher hotspot, kuota FUP, dan status MikroTik",
   "start_url": "../index.php",
   "scope": "../",

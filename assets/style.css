@@ -947,3 +947,46 @@ html[data-theme="light"] .mh-card{ background-color: rgba(255, 255, 255, 0.85) !
     padding-right: 24px !important;
   }
 }
+
+/* Tambahan untuk badge kuota + uptime di panel "Acces Point & User static".
+   Sesuaikan warna dengan variabel CSS yang sudah dipakai di style.css Anda
+   (mis. ganti #7dd3fc / #f472b6 kalau sudah punya --accent atau serupa). */
+
+
+.mh-ipbinding-meta {
+  margin-left: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.mh-ipbinding-quota {
+  font-size: 11px;
+  color: #7dd3fc;
+  white-space: nowrap;
+}
+
+.mh-ipbinding-uptime {
+  font-size: 10px;
+  color: #94a3b8;
+  white-space: nowrap;
+}
+
+/* Tambahan status online/offline di atas baris histori (mh-ipbinding-meta). */
+.mh-ipbinding-status {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+.mh-ipbinding-status-on { color: var(--green); }
+.mh-ipbinding-status-off { color: var(--danger); }
+
+/* Fix gap khusus MODE DESKTOP PAKSA (tombol pojok kanan bawah) saja - TIDAK
+   menyentuh mode mobile asli sama sekali, karena di-scope lewat
+   html[data-view-mode="desktop"] yang sudah dipakai situs ini sendiri. */
+html[data-view-mode="desktop"] .mh-panel-head { margin-bottom: 4px !important; }
+html[data-view-mode="desktop"] #ipBindingList { margin-top: 0 !important; padding-top: 0 !important; }
+html[data-view-mode="desktop"] #ipBindingList .mh-ipbinding-group-title { margin-top: 0 !important; margin-bottom: 4px !important; }

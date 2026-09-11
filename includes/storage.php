@@ -85,7 +85,7 @@ function mh_get_settings($host)
     $all = mh_read_json('settings.json', array());
     $key = mh_settings_key($host);
     $defaults = array(
-        'quota_gb' => 0, 'interface' => '', 'reset_day' => 1,
+        'quota_gb' => 0, 'interface' => '', 'reset_day' => 1, 'static_quota_gb' => 0,
         'telegram_enabled' => false, 'telegram_token' => '', 'telegram_chat_id' => '',
         'cron_enabled' => false, 'cron_token' => '',
         // Profil voucher untuk cetak (dipakai semua layout print di popup Voucher).
@@ -415,6 +415,108 @@ function mh_sync_bandwidth($host, $currentUsageGb)
 
     $all[$key] = $state;
     mh_write_json('bandwidth.json', $all);
+
+    return $state;
+}
+
+/**
+ * ---------- KUOTA USER STATIC (dari Simple Queue per IP) ----------
+ * Pola sama persis dengan mh_track_usage_categories(): bandingkan counter
+ * mentah tiap poll, akumulasikan selisihnya. Counter turun (Queue di-reset /
+ * router reboot) dianggap mulai dari 0 lagi, BUKAN dikurangi - supaya kuota
+ * yang sudah terpakai tidak pernah "hilang" gara-gara restart.
+ */
+function mh_default_static_quota_state()
+{
+    return array(
+        'cycle_start' => '',
+        'last_raw'    => array(),  // ip => counter mentah terakhir dari Queue
+        'cycle_bytes' => array(),  // ip => akumulasi terpakai siklus berjalan
+        'last_update' => '',
+    );
+}
+
+/**
+ * $rawBytesByIp: array('10.20.30.35' => 15234000000, ...) - counter MENTAH
+ * (rx+tx) dari Simple Queue saat ini, hasil mh_fetch_static_queue_bytes().
+ */
+function mh_track_static_quota($host, $rawBytesByIp, $resetDay)
+{
+    $all = mh_read_json('static_quota.json', array());
+    $key = mh_settings_key($host);
+    $state = isset($all[$key]) ? array_merge(mh_default_static_quota_state(), $all[$key]) : mh_default_static_quota_state();
+
+    $cycleStart = mh_cycle_start($resetDay);
+    if ($state['cycle_start'] !== $cycleStart) {
+        $state['cycle_start'] = $cycleStart;
+        $state['cycle_bytes'] = array();
+        // last_raw TIDAK direset - tetap dipakai sebagai basis delta siklus baru.
+    }
+
+    if (is_array($rawBytesByIp)) {
+        foreach ($rawBytesByIp as $ip => $val) {
+            $val = (float) $val;
+            $last = isset($state['last_raw'][$ip]) ? $state['last_raw'][$ip] : null;
+            $prevCycle = isset($state['cycle_bytes'][$ip]) ? $state['cycle_bytes'][$ip] : 0;
+            if ($last !== null) {
+                $delta = $val >= $last ? $val - $last : $val; // counter turun = queue di-reset/reboot
+                $prevCycle += max(0, $delta);
+            }
+            $state['cycle_bytes'][$ip] = $prevCycle;
+            $state['last_raw'][$ip] = $val;
+        }
+        $state['last_update'] = date('Y-m-d H:i:s');
+    }
+
+    $all[$key] = $state;
+    mh_write_json('static_quota.json', $all);
+
+    return $state;
+}
+
+/**
+ * ---------- UPTIME REAL USER STATIC (dari hasil ping) ----------
+ * Status online/offline sendiri sudah dites lewat ping di mh_fetch_ip_bindings().
+ * Fungsi ini HANYA mencatat "sejak kapan" tiap IP terakhir kali mulai online
+ * beruntun, supaya durasinya bisa dihitung tiap poll tanpa perlu router
+ * menyimpan apa-apa. Disimpan di file terpisah (bukan di memori PHP) supaya
+ * kalau server restart, durasi yang sedang berjalan tidak ikut ke-reset ke 0.
+ */
+function mh_default_static_uptime_state()
+{
+    return array('devices' => array()); // ip => array('online'=>bool, 'since'=>timestamp|null)
+}
+
+/** $onlineMap: array('10.20.30.35' => true, '10.20.30.40' => false, ...) hasil ping poll saat ini. */
+function mh_track_static_uptime($host, $onlineMap)
+{
+    $all = mh_read_json('static_uptime.json', array());
+    $key = mh_settings_key($host);
+    $state = isset($all[$key]) ? array_merge(mh_default_static_uptime_state(), $all[$key]) : mh_default_static_uptime_state();
+
+    $now = time();
+    foreach ($onlineMap as $ip => $isOnline) {
+        $dev = isset($state['devices'][$ip])
+            ? $state['devices'][$ip]
+            : array('online' => false, 'since' => null, 'last_offline_at' => null);
+
+        if ($isOnline) {
+            if (empty($dev['online']) || $dev['since'] === null) {
+                $dev['since'] = $now; // baru saja mulai online beruntun
+            }
+            $dev['online'] = true;
+        } else {
+            if (!empty($dev['online'])) {
+                $dev['last_offline_at'] = $now; // baru saja terputus - catat waktunya
+            }
+            $dev['online'] = false;
+            $dev['since'] = null;
+        }
+        $state['devices'][$ip] = $dev;
+    }
+
+    $all[$key] = $state;
+    mh_write_json('static_uptime.json', $all);
 
     return $state;
 }

@@ -536,7 +536,7 @@ code{
 }
 
 /* User IP Binding List */
-.mh-ipbinding-list{ display: flex; flex-direction: column; gap: 12px; overflow-y: auto; padding-right: 4px; flex: 1 1 auto; min-height: 0; max-height: 250px; }
+.mh-ipbinding-list{ display: flex; flex-direction: column; gap: 12px; overflow-y: auto; padding-right: 4px; flex: 1 1 auto; min-height: 0; max-height: 300px; }
 .mh-ipbinding-group{ display: flex; flex-direction: column; gap: 8px; }
 .mh-ipbinding-group + .mh-ipbinding-group{ padding-top: 8px; border-top: 1px dashed var(--panel-line); }
 .mh-ipbinding-group-title{ font-size: 10px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); font-family: var(--font-display); }

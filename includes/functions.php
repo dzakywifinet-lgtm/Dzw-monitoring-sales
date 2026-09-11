@@ -301,6 +301,120 @@ function mh_ip_binding_group($rawName)
     return array('group' => 'other', 'label' => $name);
 }
 
+/**
+ * Ambil counter byte (rx+tx) tiap Simple Queue, dikelompokkan per alamat IP
+ * target - dipakai sebagai sumber kuota User Static (IP Binding). Format
+ * field "bytes" bawaan RouterOS adalah string "rxbytes/txbytes".
+ */
+function mh_fetch_static_queue_bytes($api)
+{
+    $rows = @$api->comm('/queue/simple/print', array('stats' => ''));
+    $out = array();
+    if (!is_array($rows)) {
+        return $out;
+    }
+    foreach ($rows as $row) {
+        if (empty($row['target']) || !isset($row['bytes'])) {
+            continue;
+        }
+        // target bisa "10.20.30.35/32" atau daftar dipisah koma - ambil IP pertama.
+        $targetList = explode(',', $row['target']);
+        $ip = trim(explode('/', $targetList[0])[0]);
+        if ($ip === '') {
+            continue;
+        }
+        $parts = explode('/', (string) $row['bytes']);
+        $rx = isset($parts[0]) ? (float) $parts[0] : 0;
+        $tx = isset($parts[1]) ? (float) $parts[1] : 0;
+        $out[$ip] = (isset($out[$ip]) ? $out[$ip] : 0) + $rx + $tx;
+    }
+    return $out;
+}
+
+/** Format durasi DETIK (bukan string uptime RouterOS) jadi "2h 15m 03s" untuk uptime real hasil ping. */
+function mh_format_uptime_seconds($sec)
+{
+    $sec = max(0, (int) $sec);
+    $d = intdiv($sec, 86400); $sec %= 86400;
+    $h = intdiv($sec, 3600); $sec %= 3600;
+    $i = intdiv($sec, 60); $s = $sec % 60;
+    if ($d > 0) {
+        return sprintf('%dh %02dj %02dm', $d, $h, $i);
+    }
+    if ($h > 0) {
+        return sprintf('%dj %02dm %02ds', $h, $i, $s);
+    }
+    return sprintf('%dm %02ds', $i, $s);
+}
+
+
+/**
+ * Sisipkan info kuota (dari Simple Queue), status, & uptime real (dari ping)
+ * ke tiap baris IP Binding, tepat di samping nama user yang sudah ada.
+ * $quotaBytesByIp: hasil cycle_bytes dari mh_track_static_quota().
+ * $uptimeDevices : hasil devices dari mh_track_static_uptime().
+ * $staticQuotaGb : batas kuota per user static dalam GB, 0 = tanpa batas.
+ */
+function mh_enrich_ip_bindings($bindings, $quotaBytesByIp, $uptimeDevices, $staticQuotaGb = 0)
+{
+    $limitBytes = ((float) $staticQuotaGb) > 0 ? ((float) $staticQuotaGb) * 1024 * 1024 * 1024 : 0;
+    $now = time();
+
+    foreach ($bindings as &$b) {
+        $ip = $b['address'];
+
+        $used = ($ip !== '' && isset($quotaBytesByIp[$ip])) ? $quotaBytesByIp[$ip] : 0;
+        $b['quota_used_bytes'] = $used;
+        $b['quota_used_fmt']   = mh_format_bytes($used);
+        if ($limitBytes > 0) {
+            $b['quota_limit_fmt'] = mh_format_bytes($limitBytes);
+            $b['quota_percent']   = min(100, round(($used / $limitBytes) * 100, 1));
+        } else {
+            $b['quota_limit_fmt'] = '';
+            $b['quota_percent']   = null;
+        }
+
+        $dev = ($ip !== '' && isset($uptimeDevices[$ip])) ? $uptimeDevices[$ip] : null;
+
+        // status_label = label pendek buat baris atas ("Online"/"Terputus").
+        // uptime_display = teks histori buat baris bawah - durasi berjalan
+        // kalau online, atau "X lalu" (sejak terakhir terputus) kalau offline.
+        if ($b['online']) {
+            $b['status_label'] = 'Online';
+            $b['uptime_display'] = ($dev && !empty($dev['since']))
+                ? mh_format_uptime_seconds($now - $dev['since'])
+                : '-'; // baru saja terdeteksi online, durasi belum diketahui
+        } else {
+            $b['status_label'] = 'Terputus';
+            $b['uptime_display'] = ($dev && !empty($dev['last_offline_at']))
+                ? mh_format_ago_seconds($now - $dev['last_offline_at'])
+                : 'belum ada histori'; // belum pernah tercatat online sebelumnya
+        }
+    }
+    unset($b);
+
+    return $bindings;
+}
+
+/** Format selisih detik jadi teks singkat "X lalu" - dipakai untuk "terakhir terputus". */
+function mh_format_ago_seconds($sec)
+{
+    $sec = max(0, (int) $sec);
+    if ($sec < 60) {
+        return 'baru saja';
+    }
+    $i = intdiv($sec, 60);
+    if ($i < 60) {
+        return $i . 'm lalu';
+    }
+    $h = intdiv($sec, 3600);
+    if ($h < 24) {
+        return $h . 'j lalu';
+    }
+    $d = intdiv($sec, 86400);
+    return $d . 'h lalu';
+}
+
 /** Daftar semua interface di router, untuk dropdown pemilih di kartu traffic real-time. */
 function mh_list_interfaces($api)
 {
@@ -627,9 +741,24 @@ function mh_build_light($api, $host, $detectLogins = true)
     $activeList = mh_fetch_hotspot_active_list($api);
     $newLogins = $detectLogins ? mh_detect_new_hotspot_logins($host, $activeList) : array();
 
-    // Identitas router & daftar interface juga dimasukkan di sini (query murah,
-    // sama seperti CPU/uptime) supaya ikut tersimpan di cache dashboard dan
-    // index.php tidak perlu menghubungi router sendiri hanya untuk dua hal ini.
+    // --- User Static: kuota (Simple Queue) + uptime real (dari ping) ---
+    $ipBindings = mh_fetch_ip_bindings($api); // online/offline per IP sudah dari ping di sini
+    $onlineMap = array();
+    foreach ($ipBindings as $b) {
+        if ($b['address'] !== '') {
+            $onlineMap[$b['address']] = $b['online'];
+        }
+    }
+    $uptimeState = mh_track_static_uptime($host, $onlineMap);
+    $queueBytes  = mh_fetch_static_queue_bytes($api);
+    $quotaState  = mh_track_static_quota($host, $queueBytes, $settings['reset_day']);
+    $ipBindings  = mh_enrich_ip_bindings(
+        $ipBindings,
+        $quotaState['cycle_bytes'],
+        $uptimeState['devices'],
+        isset($settings['static_quota_gb']) ? $settings['static_quota_gb'] : 0
+    );
+
     $light = array(
         'identity'     => mh_identity($api),
         'interfaces'   => mh_list_interfaces($api),
@@ -639,7 +768,7 @@ function mh_build_light($api, $host, $detectLogins = true)
         'server_time'  => date('H:i:s', $now),
         'server_date'  => date('Y-m-d', $now),
         'bandwidth'    => mh_bandwidth_view($settings, $bwState),
-        'ip_bindings'  => mh_fetch_ip_bindings($api),
+        'ip_bindings'  => $ipBindings,
         'new_logins'   => $newLogins,
     );
 

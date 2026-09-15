@@ -148,6 +148,10 @@ $cronScheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') || (($_
 $cronDir = rtrim(str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME'] ?? '/')), '/');
 $cronUrl = $cronScheme . '://' . ($_SERVER['HTTP_HOST'] ?? 'domain-anda') . $cronDir . '/cron.php?token=' . $settings['cron_token'];
 $cronCmd = '*/2 * * * * curl -s "' . $cronUrl . '" >/dev/null 2>&1';
+// Alternatif lewat PHP CLI: lebih tahan terhadap timeout web server (uhttpd/PHP-CGI)
+// karena tidak lewat HTTP sama sekali - cron.php sudah mendukung argumen token via CLI.
+$cronScriptPath = realpath(__DIR__ . '/cron.php') ?: (__DIR__ . '/cron.php');
+$cronCmdCli = '*/2 * * * * php-cli ' . $cronScriptPath . ' ' . $settings['cron_token'] . ' >/dev/null 2>&1';
 
 $csrf = mh_csrf_token();
 ?>
@@ -360,15 +364,30 @@ $csrf = mh_csrf_token();
         </div>
 
         <label class="mh-field">
-          <span>Perintah cron (contoh: jalan tiap 2 menit)</span>
+          <span>Perintah cron - lewat HTTP/curl (contoh: jalan tiap 2 menit)</span>
           <div class="mh-copy-row">
             <input type="text" id="cronCmd" class="mh-mono-input" readonly value="<?= htmlspecialchars($cronCmd, ENT_QUOTES, 'UTF-8') ?>">
-            <button type="button" class="mh-btn-ghost" id="cronCopyBtn" onclick="mhCopyCron()">Salin</button>
+            <button type="button" class="mh-btn-ghost" id="cronCopyBtn" onclick="mhCopyField('cronCmd','cronCopyBtn')">Salin</button>
           </div>
         </label>
         <p class="mh-field-hint">
-          Tempel baris di atas ke crontab server Anda (<code>crontab -e</code>). Endpoint
-          <code>cron.php</code> memakai token rahasia di URL sebagai pengaman, bukan sesi login.
+          Cocok untuk hosting biasa (shared hosting/cPanel). Endpoint <code>cron.php</code> memakai
+          token rahasia di URL sebagai pengaman, bukan sesi login.
+        </p>
+
+        <label class="mh-field" style="margin-top:16px;">
+          <span>Perintah cron - lewat PHP CLI (disarankan jika ada akses shell/root, mis. VPS/router)</span>
+          <div class="mh-copy-row">
+            <input type="text" id="cronCmdCli" class="mh-mono-input" readonly value="<?= htmlspecialchars($cronCmdCli, ENT_QUOTES, 'UTF-8') ?>">
+            <button type="button" class="mh-btn-ghost" id="cronCopyBtnCli" onclick="mhCopyField('cronCmdCli','cronCopyBtnCli')">Salin</button>
+          </div>
+        </label>
+        <p class="mh-field-hint">
+          Lebih tahan terhadap timeout web server dibanding cara HTTP/curl di atas, karena
+          menjalankan <code>cron.php</code> langsung tanpa lewat web server sama sekali. Sesuaikan
+          nama binary PHP CLI (<code>php-cli</code>) kalau berbeda di server Anda (misalnya
+          <code>php</code> atau <code>php8</code>) - cek dengan <code>which php-cli</code> atau
+          <code>which php</code>.
         </p>
 
         <div class="mh-cron-actions">
@@ -414,9 +433,9 @@ $csrf = mh_csrf_token();
     });
   })();
 
-  function mhCopyCron() {
-    var input = document.getElementById('cronCmd');
-    var btn = document.getElementById('cronCopyBtn');
+  function mhCopyField(inputId, btnId) {
+    var input = document.getElementById(inputId);
+    var btn = document.getElementById(btnId);
     if (!input) return;
     var done = function () {
       if (!btn) return;
